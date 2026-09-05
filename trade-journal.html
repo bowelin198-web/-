@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MONO · 交易手记</title>
+<style>
+  :root{
+    --ink:#0f0f0f;
+    --paper:#ffffff;
+    --bg:#fafafa;
+    --line:#e8e8e6;
+    --muted:#8b8b88;
+    --muted-2:#b3b3b0;
+    --up:#0f0f0f;
+    --down:#c0392b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px;}
+
+  /* header */
+  header{
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+  }
+  .header-inner{
+    display:flex;align-items:center;justify-content:space-between;
+    height:64px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:16px;letter-spacing:.2px;}
+  .brand .mark{
+    display:inline-flex;gap:2px;
+  }
+  .mark span{width:4px;height:18px;background:var(--ink);display:inline-block;border-radius:1px;}
+  .mark span:nth-child(2){height:22px;}
+  .mark span:nth-child(3){height:14px;}
+  .brand .div{color:var(--muted-2);font-weight:400;}
+  .brand .sub{font-weight:400;color:var(--ink);}
+  nav{display:flex;gap:28px;font-size:14px;color:var(--muted);}
+  nav a.active{color:var(--ink);font-weight:600;position:relative;}
+  nav a.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-21px;height:2px;background:var(--ink);
+  }
+  .workspace{font-size:13px;color:var(--muted);}
+
+  /* hero */
+  .hero{padding:44px 0 30px;}
+  .eyebrow{font-size:12px;letter-spacing:1.5px;color:var(--muted-2);margin-bottom:10px;}
+  .hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+  h1{font-size:38px;margin:0 0 8px;letter-spacing:-.5px;}
+  .tagline{color:var(--muted);font-size:15px;margin:0;}
+  .btn-primary{
+    background:var(--ink);color:#fff;border:none;padding:13px 22px;border-radius:10px;
+    font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn-primary:hover{background:#262626;}
+
+  /* section label row */
+  .section-label{display:flex;align-items:center;justify-content:space-between;margin:38px 0 14px;}
+  .section-label .title{font-size:14px;font-weight:600;}
+  .section-label .title small{color:var(--muted-2);font-weight:400;margin-left:6px;}
+  select.range{
+    font-size:13px;border:1px solid var(--line);background:var(--paper);
+    border-radius:8px;padding:8px 12px;color:var(--ink);
+  }
+
+  /* stat cards */
+  .stat-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+  }
+  .card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;
+  }
+  .card.dark{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .card .label{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:18px;}
+  .card.dark .label{color:#b8b8b6;}
+  .card .value{font-size:32px;font-weight:600;letter-spacing:-.5px;}
+  .card .value .unit{font-size:18px;font-weight:500;margin-left:2px;}
+  .card .foot{font-size:12.5px;color:var(--muted-2);margin-top:10px;}
+  .card.dark .foot{color:#8f8f8d;}
+
+  /* main row: chart + discipline */
+  .main-row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-top:16px;}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:26px;}
+  .panel h3{font-size:15px;margin:0 0 4px;}
+  .panel .sub{font-size:13px;color:var(--muted);margin:0 0 18px;}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;}
+  .unit-badge{font-size:12px;border:1px solid var(--line);border-radius:7px;padding:4px 10px;color:var(--muted);}
+
+  .discipline{display:flex;flex-direction:column;align-items:center;text-align:center;}
+  .donut-wrap{position:relative;width:150px;height:150px;margin:6px 0 18px;}
+  .donut-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .donut-center .pct{font-size:26px;font-weight:700;}
+  .donut-center .pct-label{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .legend{display:flex;flex-direction:column;gap:8px;font-size:13px;width:100%;max-width:210px;}
+  .legend-row{display:flex;align-items:center;justify-content:space-between;}
+  .legend-row .dot{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:8px;}
+  .legend-left{display:flex;align-items:center;color:var(--ink);}
+  .discipline .note{font-size:12px;color:var(--muted-2);margin-top:16px;line-height:1.5;}
+
+  /* trades table */
+  .table-panel{margin-top:16px;}
+  .table-controls{display:flex;gap:12px;margin:18px 0;}
+  .search{
+    flex:1;display:flex;align-items:center;gap:8px;border:1px solid var(--line);
+    border-radius:9px;padding:10px 14px;font-size:14px;color:var(--muted);
+  }
+  .search input{border:none;outline:none;background:transparent;font-size:14px;flex:1;color:var(--ink);font-family:inherit;}
+  select.market{
+    border:1px solid var(--line);border-radius:9px;padding:10px 14px;font-size:14px;background:var(--paper);color:var(--ink);
+  }
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  thead th{
+    text-align:left;font-weight:500;color:var(--muted);font-size:12.5px;
+    padding:10px 8px;border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:16px 8px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .sym{font-weight:600;}
+  .dir{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .dir.long::before{content:"↗ ";}
+  .dir.short::before{content:"↘ ";}
+  .pnl-pos{color:var(--up);font-weight:600;}
+  .pnl-neg{color:var(--down);font-weight:600;}
+  .tag{
+    font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:var(--muted);
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .tag.good{color:var(--ink);border-color:var(--ink);}
+  .tag.good::before{content:"●";font-size:8px;}
+  .tag.bad::before{content:"●";font-size:8px;color:var(--muted-2);}
+  .row-actions{display:flex;gap:10px;justify-content:flex-end;color:var(--muted-2);}
+  .row-actions button{background:none;border:none;cursor:pointer;color:var(--muted-2);font-size:15px;padding:4px;}
+  .row-actions button:hover{color:var(--ink);}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--muted);}
+  .table-foot{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted-2);padding:14px 8px 2px;}
+
+  footer{margin:60px 0 30px;display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted-2);}
+
+  /* modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(15,15,15,.4);display:none;
+    align-items:center;justify-content:center;padding:20px;z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .modal{
+    background:var(--paper);border-radius:16px;width:100%;max-width:480px;
+    padding:28px;max-height:90vh;overflow-y:auto;
+  }
+  .modal h3{margin:0 0 20px;font-size:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+  .field input,.field select,.field textarea{
+    width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    font-size:14px;font-family:inherit;color:var(--ink);background:var(--paper);
+  }
+  .field textarea{resize:vertical;min-height:60px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  .btn-ghost{
+    background:none;border:1px solid var(--line);padding:10px 18px;border-radius:9px;
+    font-size:14px;cursor:pointer;color:var(--ink);
+  }
+
+  @media (max-width:900px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .main-row{grid-template-columns:1fr;}
+    nav{display:none;}
+    h1{font-size:28px;}
+    thead{display:none;}
+    table,tbody,tr,td{display:block;width:100%;}
+    tbody tr{border-bottom:1px solid var(--line);padding:14px 0;}
+    tbody td{border-bottom:none;padding:4px 0;}
+    .row-actions{justify-content:flex-start;margin-top:8px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <div class="brand">
+      <span class="mark"><span></span><span></span><span></span></span>
+      MONO <span class="div">/</span><span class="sub">交易手记</span>
+    </div>
+    <nav>
+      <a href="#" class="active">总览</a>
+      <a href="#" id="navRecords">交易记录</a>
+    </nav>
+    <div class="workspace">🔒 私人工作台</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">YOUR TRADING JOURNAL</div>
+    <div class="hero-row">
+      <div>
+        <h1>交易总览.</h1>
+        <p class="tagline">记录每次决策，让复盘有迹可循。</p>
+      </div>
+      <button class="btn-primary" id="addTradeBtn">＋ 记录一笔交易</button>
+    </div>
+  </div>
+
+  <div class="section-label">
+    <div class="title">表现概览 <small>/ PERFORMANCE</small></div>
+    <select class="range" id="rangeFilter">
+      <option value="all">全部时间</option>
+      <option value="30">最近 30 天</option>
+      <option value="7">最近 7 天</option>
+    </select>
+  </div>
+
+  <div class="stat-grid">
+    <div class="card dark">
+      <div class="label">累计净盈亏 <span>↗</span></div>
+      <div class="value" id="statPnl">$0.00</div>
+      <div class="foot">USD · 已扣除手续费</div>
+    </div>
+    <div class="card">
+      <div class="label">交易胜率 <span>◎</span></div>
+      <div class="value" id="statWinRate">—<span class="unit">%</span></div>
+      <div class="foot" id="statWinFoot">0 盈利 / 0 亏损 / 0 持平</div>
+    </div>
+    <div class="card">
+      <div class="label">平均 R 倍数 <span>?</span></div>
+      <div class="value" id="statR">—</div>
+      <div class="foot">净盈亏 ÷ 计划风险金额</div>
+    </div>
+    <div class="card">
+      <div class="label">已记录交易 <span>📖</span></div>
+      <div class="value" id="statCount">00<span class="unit">笔</span></div>
+      <div class="foot">每一笔记录 都是复盘的起点</div>
+    </div>
+  </div>
+
+  <div class="main-row">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>盈亏曲线</h3>
+          <p class="sub">当前筛选范围内的累计净盈亏</p>
+        </div>
+        <span class="unit-badge">USD</span>
+      </div>
+      <canvas id="pnlChart" height="220"></canvas>
+    </div>
+
+    <div class="panel discipline">
+      <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
+        <h3 style="text-align:left;">纪律执行</h3>
+        <span style="color:var(--muted-2);">◎</span>
+      </div>
+      <div class="donut-wrap">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="62" fill="none" stroke="#eeeeec" stroke-width="14"/>
+          <circle id="donutArc" cx="75" cy="75" r="62" fill="none" stroke="#0f0f0f" stroke-width="14"
+            stroke-dasharray="0 389" stroke-linecap="round" transform="rotate(-90 75 75)"/>
+        </svg>
+        <div class="donut-center">
+          <div class="pct" id="disciplinePct">0%</div>
+          <div class="pct-label">按计划执行</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-row"><span class="legend-left"><span class="dot" style="background:#0f0f0f;"></span>遵守计划</span><span id="goodCount">0</span></div>
+        <div class="legend-row"><span class="legend-left" style="color:var(--muted);"><span class="dot" style="background:#d8d8d5;"></span>偏离计划</span><span id="badCount">0</span></div>
+      </div>
+      <div class="note">复盘时，把执行质量与盈亏分开看。</div>
+    </div>
+  </div>
+
+  <div class="panel table-panel">
+    <h3>交易记录 <span style="color:var(--muted-2);font-weight:400;" id="recordCountBadge">0</span></h3>
+    <p class="sub">已平仓的交易，以及当时的思考。</p>
+
+    <div class="table-controls">
+      <div class="search">🔍 <input id="searchInput" placeholder="搜索品种、策略或复盘..."></div>
+      <select class="market" id="marketFilter">
+        <option value="all">全部市场</option>
+      </select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th><th>品种 / 方向</th><th>交易策略</th><th>净盈亏 USD</th><th>R 倍数</th><th>执行情况</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="tradeTableBody"></tbody>
+    </table>
+    <div class="table-foot">
+      <span id="tableFootCount">共 0 笔交易</span>
+      <span>所有金额统一以 USD 记录</span>
+    </div>
+  </div>
+
+  <footer>
+    <span>MONO / 交易手记</span>
+    <span>☁ 记录持久保存于本设备</span>
+  </footer>
+</div>
+
+<!-- modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">记录一笔交易</h3>
+    <form id="tradeForm">
+      <input type="hidden" id="editId">
+      <div class="field-row">
+        <div class="field">
+          <label>日期</label>
+          <input type="date" id="f_date" required>
+        </div>
+        <div class="field">
+          <label>品种</label>
+          <input type="text" id="f_symbol" placeholder="例如 BTC" required>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>方向</label>
+          <select id="f_dir">
+            <option value="long">做多</option>
+            <option value="short">做空</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>市场</label>
+          <input type="text" id="f_market" placeholder="例如 加密货币" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>交易策略 / 复盘</label>
+        <textarea id="f_strategy" placeholder="例如 超跌反弹，rsi超卖"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>净盈亏 (USD)</label>
+          <input type="number" step="0.01" id="f_pnl" required>
+        </div>
+        <div class="field">
+          <label>R 倍数（可选）</label>
+          <input type="number" step="0.01" id="f_r" placeholder="—">
+        </div>
+      </div>
+      <div class="field">
+        <label>执行情况</label>
+        <select id="f_exec">
+          <option value="good">遵守计划</option>
+          <option value="bad">偏离计划</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="cancelBtn">取消</button>
+        <button type="submit" class="btn-primary">保存记录</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'mono_trade_journal_trades';
+
+function loadTrades(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function saveTrades(trades){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+}
+
+let trades = loadTrades();
+
+// seed one example trade the very first time, mirroring the original demo
+if(trades.length === 0 && !localStorage.getItem('mono_seeded')){
+  trades.push({
+    id: Date.now().toString(),
+    date: new Date().toISOString().slice(0,10),
+    symbol: 'BTC',
+    dir: 'long',
+    market: '加密货币',
+    strategy: '超跌反弹，rsi超卖',
+    pnl: 10.20,
+    r: null,
+    exec: 'bad'
+  });
+  saveTrades(trades);
+  localStorage.setItem('mono_seeded','1');
+}
+
+const els = {
+  addTradeBtn: document.getElementById('addTradeBtn'),
+  overlay: document.getElementById('overlay'),
+  cancelBtn: document.getElementById('cancelBtn'),
+  form: document.getElementById('tradeForm'),
+  modalTitle: document.getElementById('modalTitle'),
+  editId: document.getElementById('editId'),
+  f_date: document.getElementById('f_date'),
+  f_symbol: document.getElementById('f_symbol'),
+  f_dir: document.getElementById('f_dir'),
+  f_market: document.getElementById('f_market'),
+  f_strategy: document.getElementById('f_strategy'),
+  f_pnl: document.getElementById('f_pnl'),
+  f_r: document.getElementById('f_r'),
+  f_exec: document.getElementById('f_exec'),
+  tableBody: document.getElementById('tradeTableBody'),
+  searchInput: document.getElementById('searchInput'),
+  marketFilter: document.getElementById('marketFilter'),
+  rangeFilter: document.getElementById('rangeFilter'),
+};
+
+function openModal(trade){
+  els.form.reset();
+  if(trade){
+    els.modalTitle.textContent = '编辑交易';
+    els.editId.value = trade.id;
+    els.f_date.value = trade.date;
+    els.f_symbol.value = trade.symbol;
+    els.f_dir.value = trade.dir;
+    els.f_market.value = trade.market;
+    els.f_strategy.value = trade.strategy || '';
+    els.f_pnl.value = trade.pnl;
+    els.f_r.value = trade.r ?? '';
+    els.f_exec.value = trade.exec;
+  } else {
+    els.modalTitle.textContent = '记录一笔交易';
+    els.editId.value = '';
+    els.f_date.value = new Date().toISOString().slice(0,10);
+  }
+  els.overlay.classList.add('open');
+}
+function closeModal(){ els.overlay.classList.remove('open'); }
+
+els.addTradeBtn.addEventListener('click', ()=>openModal(null));
+els.cancelBtn.addEventListener('click', closeModal);
+els.overlay.addEventListener('click', (e)=>{ if(e.target === els.overlay) closeModal(); });
+
+els.form.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const id = els.editId.value;
+  const data = {
+    id: id || Date.now().toString(),
+    date: els.f_date.value,
+    symbol: els.f_symbol.value.trim(),
+    dir: els.f_dir.value,
+    market: els.f_market.value.trim(),
+    strategy: els.f_strategy.value.trim(),
+    pnl: parseFloat(els.f_pnl.value || '0'),
+    r: els.f_r.value === '' ? null : parseFloat(els.f_r.value),
+    exec: els.f_exec.value
+  };
+  if(id){
+    trades = trades.map(t => t.id === id ? data : t);
+  } else {
+    trades.unshift(data);
+  }
+  saveTrades(trades);
+  closeModal();
+  render();
+});
+
+function deleteTrade(id){
+  if(!confirm('确定删除这笔交易记录吗？')) return;
+  trades = trades.filter(t => t.id !== id);
+  saveTrades(trades);
+  render();
+}
+
+function editTrade(id){
+  const t = trades.find(t => t.id === id);
+  if(t) openModal(t);
+}
+
+function filteredTrades(){
+  let list = [...trades].sort((a,b)=> a.date.localeCompare(b.date));
+  const q = els.searchInput.value.trim().toLowerCase();
+  if(q){
+    list = list.filter(t =>
+      t.symbol.toLowerCase().includes(q) ||
+      (t.strategy||'').toLowerCase().includes(q) ||
+      (t.market||'').toLowerCase().includes(q)
+    );
+  }
+  const mk = els.marketFilter.value;
+  if(mk !== 'all') list = list.filter(t => t.market === mk);
+
+  const range = els.rangeFilter.value;
+  if(range !== 'all'){
+    const days = parseInt(range,10);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    list = list.filter(t => new Date(t.date) >= cutoff);
+  }
+  return list;
+}
+
+function updateMarketOptions(){
+  const markets = [...new Set(trades.map(t=>t.market).filter(Boolean))];
+  const current = els.marketFilter.value;
+  els.marketFilter.innerHTML = '<option value="all">全部市场</option>' +
+    markets.map(m=>`<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+  if(markets.includes(current)) els.marketFilter.value = current;
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtMoney(n){
+  const sign = n < 0 ? '-' : '+';
+  return `${sign}$${Math.abs(n).toFixed(2)}`;
+}
+function fmtDate(d){
+  const dt = new Date(d+'T00:00:00');
+  const mm = String(dt.getMonth()+1).padStart(2,'0');
+  const dd = String(dt.getDate()).padStart(2,'0');
+  return {md:`${mm}.${dd}`, yyyy: dt.getFullYear()};
+}
+
+function render(){
+  updateMarketOptions();
+  const list = filteredTrades();
+
+  // stats
+  const totalPnl = list.reduce((s,t)=>s+t.pnl,0);
+  const wins = list.filter(t=>t.pnl>0).length;
+  const losses = list.filter(t=>t.pnl<0).length;
+  const flats = list.length - wins - losses;
+  const winRate = list.length ? ((wins/list.length)*100).toFixed(1) : '—';
+  const rTrades = list.filter(t=> t.r !== null && t.r !== undefined && !isNaN(t.r));
+  const avgR = rTrades.length ? (rTrades.reduce((s,t)=>s+t.r,0)/rTrades.length).toFixed(2) : '—';
+
+  document.getElementById('statPnl').textContent = (totalPnl<0?'-':'+') + '$' + Math.abs(totalPnl).toFixed(2);
+  document.getElementById('statWinRate').innerHTML = (list.length? winRate : '—') + '<span class="unit">%</span>';
+  document.getElementById('statWinFoot').textContent = `${wins} 盈利 / ${losses} 亏损 / ${flats} 持平`;
+  document.getElementById('statR').textContent = avgR;
+  document.getElementById('statCount').innerHTML = String(list.length).padStart(2,'0') + '<span class="unit">笔</span>';
+  document.getElementById('recordCountBadge').textContent = list.length;
+  document.getElementById('tableFootCount').textContent = `共 ${list.length} 笔交易`;
+
+  // discipline donut
+  const good = list.filter(t=>t.exec==='good').length;
+  const bad = list.filter(t=>t.exec==='bad').length;
+  const total = good+bad;
+  const pct = total ? Math.round((good/total)*100) : 0;
+  const circumference = 2*Math.PI*62;
+  const arcLen = circumference * (pct/100);
+  document.getElementById('donutArc').setAttribute('stroke-dasharray', `${arcLen} ${circumference}`);
+  document.getElementById('disciplinePct').textContent = pct + '%';
+  document.getElementById('goodCount').textContent = good;
+  document.getElementById('badCount').textContent = bad;
+
+  // table
+  if(list.length === 0){
+    els.tableBody.innerHTML = `<tr><td colspan="7"><div class="empty-state">还没有交易记录，点击右上角"记录一笔交易"开始。</div></td></tr>`;
+  } else {
+    els.tableBody.innerHTML = list.slice().reverse().map(t=>{
+      const d = fmtDate(t.date);
+      const pnlClass = t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+      const dirLabel = t.dir === 'long' ? '做多' : '做空';
+      const dirClass = t.dir === 'long' ? 'long' : 'short';
+      const execTag = t.exec === 'good'
+        ? `<span class="tag good">遵守计划</span>`
+        : `<span class="tag bad">偏离计划</span>`;
+      const rVal = (t.r===null || t.r===undefined || isNaN(t.r)) ? '—' : t.r;
+      return `<tr>
+        <td>${d.md}<br><span style="color:var(--muted-2);font-size:12.5px;">${d.yyyy}</span></td>
+        <td><span class="sym">${escapeHtml(t.symbol)}</span><br><span class="dir ${dirClass}">${dirLabel} · ${escapeHtml(t.market)}</span></td>
+        <td>${escapeHtml(t.strategy)}</td>
+        <td class="${pnlClass}">${fmtMoney(t.pnl)}</td>
+        <td>${rVal}</td>
+        <td>${execTag}</td>
+        <td>
+          <div class="row-actions">
+            <button title="编辑" onclick="editTrade('${t.id}')">✎</button>
+            <button title="删除" onclick="deleteTrade('${t.id}')">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  drawChart(list);
+}
+
+function drawChart(list){
+  const canvas = document.getElementById('pnlChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || canvas.parentElement.clientWidth - 52;
+  const cssH = 220;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const padL = 34, padR = 10, padT = 14, padB = 26;
+  const plotW = cssW - padL - padR;
+  const plotH = cssH - padT - padB;
+
+  const sorted = [...list].sort((a,b)=>a.date.localeCompare(b.date));
+  let cum = 0;
+  const points = sorted.map(t=>{ cum += t.pnl; return {date:t.date, val:cum}; });
+
+  const values = points.map(p=>p.val);
+  let maxV = Math.max(0, ...values);
+  let minV = Math.min(0, ...values);
+  if(maxV === minV){ maxV += 5; minV -= 2; }
+  const pad = (maxV-minV)*0.15 || 1;
+  maxV += pad; minV -= pad*0.4;
+
+  // gridlines
+  ctx.strokeStyle = '#e8e8e6';
+  ctx.fillStyle = '#b3b3b0';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.lineWidth = 1;
+  const steps = 4;
+  for(let i=0;i<=steps;i++){
+    const v = minV + (maxV-minV)*(i/steps);
+    const y = padT + plotH - ((v-minV)/(maxV-minV))*plotH;
+    ctx.beginPath();
+    ctx.setLineDash([3,3]);
+    ctx.moveTo(padL,y); ctx.lineTo(cssW-padR,y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(v.toFixed(0), 2, y+4);
+  }
+
+  if(points.length === 0){
+    ctx.fillStyle = '#b3b3b0';
+    ctx.font = '13px -apple-system, sans-serif';
+    ctx.fillText('暂无数据', cssW/2 - 24, cssH/2);
+    return;
+  }
+
+  const xFor = (i) => points.length===1 ? padL + plotW/2 : padL + (plotW * i/(points.length-1));
+  const yFor = (v) => padT + plotH - ((v-minV)/(maxV-minV))*plotH;
+
+  // area fill
+  ctx.beginPath();
+  points.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p.val);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.lineTo(xFor(points.length-1), padT+plotH);
+  ctx.lineTo(xFor(0), padT+plotH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0,padT,0,padT+plotH);
+  grad.addColorStop(0,'rgba(15,15,15,0.12)');
+  grad.addColorStop(1,'rgba(15,15,15,0)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // line
+  ctx.beginPath();
+  points.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p.val);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = '#0f0f0f';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // last point dot
+  const lastX = xFor(points.length-1), lastY = yFor(points[points.length-1].val);
+  ctx.beginPath();
+  ctx.arc(lastX,lastY,4,0,Math.PI*2);
+  ctx.fillStyle = '#0f0f0f';
+  ctx.fill();
+
+  // x labels (first/last)
+  ctx.fillStyle = '#b3b3b0';
+  ctx.font = '11px -apple-system, sans-serif';
+  const firstD = fmtDate(points[0].date).md;
+  const lastD = fmtDate(points[points.length-1].date).md;
+  ctx.fillText(firstD, padL, cssH-6);
+  ctx.fillText(lastD, cssW-padR-30, cssH-6);
+}
+
+els.searchInput.addEventListener('input', render);
+els.marketFilter.addEventListener('change', render);
+els.rangeFilter.addEventListener('change', render);
+document.getElementById('navRecords').addEventListener('click', (e)=>{
+  e.preventDefault();
+  document.querySelector('.table-panel').scrollIntoView({behavior:'smooth'});
+});
+window.addEventListener('resize', render);
+
+render();
+</script>
+</body>
+</html>
